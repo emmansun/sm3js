@@ -18,7 +18,7 @@
         "url": "git+https://github.com/emmansun/sm3js.git"
     },
     "author": "Emman Sun",
-    "license": "MIT",
+    "license": "Apache-2.0",
     "bugs": {
         "url": "https://github.com/emmansun/sm3js/issues"
     }

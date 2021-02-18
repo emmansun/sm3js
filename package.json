@@ -1,5 +1,5 @@
 {
-    "name": "sm3js",
+    "name": "gmsm-sm3js",
     "version": "0.1.0",
     "description": "Pure Javascript implementation of the SM3 hash functions",
     "main": "index.js",

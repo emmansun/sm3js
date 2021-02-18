@@ -78,6 +78,17 @@ function toHex (bytes) {
   }).join('')
 }
 
+function fromHex (hexStr) {
+  if (typeof hexStr !== 'string' || hexStr.length % 2 === 1) {
+    throw new Error('Invalid hex string')
+  }
+  const bytes = []
+  for (let i = 0; i < hexStr.length; i += 2) {
+    bytes.push(parseInt(hexStr.substr(i, 2), 16))
+  }
+  return new Uint8Array(bytes)
+}
+
 // For performance testing: generates N bytes of input, hashes M times
 // Measures and prints MB/second hash performance each time
 function testSpeed (hashFn, N, M) {
@@ -274,6 +285,8 @@ function sm3SumHex (data) {
 module.exports = {
   create: sm3New,
   sum: sm3Sum,
+  fromHex: fromHex,
+  toHex: toHex,
   sumHex: sm3SumHex,
   testSpeed: testSpeed
 }

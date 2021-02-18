@@ -1,0 +1,25 @@
+{
+    "name": "sm3js",
+    "version": "0.1.0",
+    "description": "Pure Javascript implementation of the SM3 hash functions",
+    "main": "index.js",
+    "scripts": {
+        "test": "standard && node src/sm3_test.js"
+    },
+    "dependencies": {
+        "long": "^4.0.0"
+    },
+    "devDependencies": {
+        "standard": "*",
+        "tape": "*"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/emmansun/sm3js.git"
+    },
+    "author": "Emman Sun",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/emmansun/sm3js/issues"
+    }
+}

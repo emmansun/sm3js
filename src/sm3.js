@@ -224,6 +224,10 @@ class Digest {
     }
   }
 
+  update (input) {
+    this.write(input)
+  }
+
   checkSum () {
     let len = new Long(this.len.low, this.len.high, true)
     const tmp = new Uint8Array(64)
@@ -262,6 +266,10 @@ class Digest {
     output.set(input)
     output.set(hash, input.length)
     return output
+  }
+
+  finalize () {
+    return this.checkSum()
   }
 }
 

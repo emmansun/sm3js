@@ -1,4 +1,5 @@
 const test = require('tape')
+const { toHex } = require('./sm3')
 const sm3 = require('./sm3')
 
 test('SM3 basic', function (t) {
@@ -31,5 +32,13 @@ test('SM3 performance', function (t) {
 
   console.log('Benchmarking sm3.sum(' + (N >> 20) + ' MB input)')
   sm3.testSpeed(sm3.sumHex, N, RUNS)
+  t.end()
+})
+
+test('KDF', function (t) {
+  const dataHex = '64D20D27D0632957F8028C1E024F6B02EDF23102A566C932AE8BD613A8E865FE58D225ECA784AE300A81A2D48281A828E1CEDF11C4219099840265375077BF78'
+  const expected = '006e30dae231b071dfad8aa379e90264491603'
+  const result = sm3.kdf(sm3.fromHex(dataHex), 19)
+  t.equal(toHex(result), expected)
   t.end()
 })

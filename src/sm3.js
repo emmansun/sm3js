@@ -3,6 +3,7 @@ const Long = require('long')
 const SM3_CHUNK = 64
 const SM3_SIZE = 32
 const SM3_BLOCKSIZE = 64
+const SM3_SIZE_BIT_SIZE = 5
 const SM3_IV32 = new Uint32Array([
   0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600,
   0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e
@@ -290,8 +291,37 @@ function sm3SumHex (data) {
   return toHex(sm3Sum(data))
 }
 
+function kdf (data, len) {
+  data = normalizeInput(data)
+  const limit = (len + SM3_SIZE - 1) >>> SM3_SIZE_BIT_SIZE
+  const countBytes = new Uint8Array(4)
+  let ct = 1
+  const k = new Uint8Array(len + SM3_SIZE - 1)
+  const md = sm3New()
+  for (let i = 0; i < limit; i++) {
+    countBytes[0] = uint8(ct >>> 24)
+    countBytes[1] = uint8(ct >>> 16)
+    countBytes[2] = uint8(ct >>> 8)
+    countBytes[3] = uint8(ct)
+    md.update(data)
+    md.update(countBytes)
+    const hash = md.finalize()
+    for (let j = 0; j < SM3_SIZE; j++) {
+      k[i * SM3_SIZE + j] = hash[j]
+    }
+    ct++
+    md.reset()
+  }
+  for (let i = 0; i < len; i++) {
+    if (k[i] !== 0) {
+      return k.subarray(0, len)
+    }
+  }
+}
+
 module.exports = {
   create: sm3New,
+  kdf: kdf,
   sum: sm3Sum,
   fromHex: fromHex,
   toHex: toHex,

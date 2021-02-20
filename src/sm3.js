@@ -325,6 +325,7 @@ module.exports = {
   sum: sm3Sum,
   fromHex: fromHex,
   toHex: toHex,
+  normalizeInput: normalizeInput,
   sumHex: sm3SumHex,
   testSpeed: testSpeed
 }

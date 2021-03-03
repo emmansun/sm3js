@@ -26,14 +26,6 @@ function rotateLeft32 (x, k) {
   return (x << s) | (x >>> (n - s))
 }
 
-function _t (j) {
-  j = uint8(j)
-  if (j < 16) {
-    return SM3_T[0]
-  }
-  return SM3_T[1]
-}
-
 function _p0 (x) {
   return x ^ rotateLeft32(x, 9) ^ rotateLeft32(x, 17)
 }
@@ -42,17 +34,11 @@ function _p1 (x) {
   return x ^ rotateLeft32(x, 15) ^ rotateLeft32(x, 23)
 }
 
-function _ff (j, x, y, z) {
-  if (j < 16) {
-    return x ^ y ^ z
-  }
+function _ff (x, y, z) {
   return (x & y) | (x & z) | (y & z)
 }
 
-function _gg (j, x, y, z) {
-  if (j < 16) {
-    return x ^ y ^ z
-  }
+function _gg (x, y, z) {
   return (x & y) | (~x & z)
 }
 
@@ -160,30 +146,58 @@ class Digest {
     const h = new Uint32Array(8)
     const a = new Uint32Array(8)
     const w = new Uint32Array(68)
-    const w1 = new Uint32Array(64)
     for (let i = 0; i < 8; i++) {
       h[i] = this.h[i]
     }
     while (input.length >= SM3_CHUNK) {
-      for (let i = 0; i < 16; i++) {
+      for (let i = 0; i < 4; i++) {
         const j = 4 * i
         w[i] = uint32(input[j] << 24 | input[j + 1] << 16 | input[j + 2] << 8 | input[j + 3])
-      }
-      for (let i = 16; i < 68; i++) {
-        w[i] = _p1(w[i - 16] ^ w[i - 9] ^ rotateLeft32(w[i - 3], 15)) ^ rotateLeft32(w[i - 13], 7) ^ w[i - 6]
-      }
-
-      for (let i = 0; i < 64; i++) {
-        w1[i] = w[i] ^ w[i + 4]
       }
       for (let i = 0; i < 8; i++) {
         a[i] = h[i]
       }
-      for (let i = 0; i < 64; i++) {
-        const ss1 = rotateLeft32(rotateLeft32(a[0], 12) + a[4] + rotateLeft32(_t(i), i), 7)
+      for (let i = 0; i < 12; i++) {
+        const j = 4 * (i + 4)
+        w[i + 4] = uint32(input[j] << 24 | input[j + 1] << 16 | input[j + 2] << 8 | input[j + 3])
+
+        const ss1 = rotateLeft32(rotateLeft32(a[0], 12) + a[4] + rotateLeft32(SM3_T[0], i), 7)
         const ss2 = ss1 ^ rotateLeft32(a[0], 12)
-        const tt1 = _ff(i, a[0], a[1], a[2]) + a[3] + ss2 + w1[i]
-        const tt2 = _gg(i, a[4], a[5], a[6]) + a[7] + ss1 + w[i]
+        const tt1 = (a[0] ^ a[1] ^ a[2]) + a[3] + ss2 + (w[i] ^ w[i + 4])
+        const tt2 = (a[4] ^ a[5] ^ a[6]) + a[7] + ss1 + w[i]
+
+        a[3] = a[2]
+        a[2] = rotateLeft32(a[1], 9)
+        a[1] = a[0]
+        a[0] = tt1
+        a[7] = a[6]
+        a[6] = rotateLeft32(a[5], 19)
+        a[5] = a[4]
+        a[4] = _p0(tt2)
+      }
+      for (let i = 12; i < 16; i++) {
+        w[i + 4] = _p1(w[i - 12] ^ w[i - 5] ^ rotateLeft32(w[i + 1], 15)) ^ rotateLeft32(w[i - 9], 7) ^ w[i - 2]
+        const ss1 = rotateLeft32(rotateLeft32(a[0], 12) + a[4] + rotateLeft32(SM3_T[0], i), 7)
+        const ss2 = ss1 ^ rotateLeft32(a[0], 12)
+        const tt1 = (a[0] ^ a[1] ^ a[2]) + a[3] + ss2 + (w[i] ^ w[i + 4])
+        const tt2 = (a[4] ^ a[5] ^ a[6]) + a[7] + ss1 + w[i]
+
+        a[3] = a[2]
+        a[2] = rotateLeft32(a[1], 9)
+        a[1] = a[0]
+        a[0] = tt1
+        a[7] = a[6]
+        a[6] = rotateLeft32(a[5], 19)
+        a[5] = a[4]
+        a[4] = _p0(tt2)
+      }
+      for (let i = 16; i < 64; i++) {
+        w[i + 4] = _p1(w[i - 12] ^ w[i - 5] ^ rotateLeft32(w[i + 1], 15)) ^ rotateLeft32(w[i - 9], 7) ^ w[i - 2]
+        const ss1 = rotateLeft32(rotateLeft32(a[0], 12) + a[4] + rotateLeft32(SM3_T[1], i), 7)
+        const ss2 = ss1 ^ rotateLeft32(a[0], 12)
+        const tt1 = _ff(a[0], a[1], a[2]) + a[3] + ss2 + (w[i] ^ w[i + 4])
+        const tt2 = _gg(a[4], a[5], a[6]) + a[7] + ss1 + w[i]
+
         a[3] = a[2]
         a[2] = rotateLeft32(a[1], 9)
         a[1] = a[0]

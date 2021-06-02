@@ -18,5 +18,7 @@ If you use sm3 with NodeJs, please use nodejs crypto directly.
     // sm3Digest('abc') === '66c7f0f462eeedd9d1f2d46bdc10e4e24167c4875cf2f7a2297da02b8f4ba8e0'
 
 
+You can call crypto.getHashes() to check if sm3 is supported or not.
+
 [npm-downloads-image]: https://badgen.net/npm/dm/gmsm-sm3js
 [npm-url]: https://npmjs.org/package/gmsm-sm3js

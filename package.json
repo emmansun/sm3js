@@ -1,6 +1,6 @@
 {
     "name": "gmsm-sm3js",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "description": "Pure Javascript implementation of the SM3 hash functions",
     "keywords": [
         "sm3",
@@ -12,10 +12,10 @@
         "test": "standard && node src/sm3_test.js"
     },
     "dependencies": {
-        "long": "^4.0.0"
+        "long": "^5.1.0"
     },
     "devDependencies": {
-        "standard": "*",
+        "standard": "^16.0.4",
         "tape": "*"
     },
     "repository": {

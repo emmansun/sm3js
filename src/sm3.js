@@ -1,5 +1,4 @@
 const Long = require('long')
-
 const SM3_CHUNK = 64
 const SM3_SIZE = 32
 const SM3_BLOCKSIZE = 64

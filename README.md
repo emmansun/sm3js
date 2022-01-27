@@ -1,5 +1,5 @@
 # sm3js
-[![Build Status](https://travis-ci.org/emmansun/sm3js.svg?branch=main)](https://travis-ci.org/emmansun/sm3js)
+[![SM3JS CI](https://github.com/emmansun/sm3js/actions/workflows/ci.yml/badge.svg)](https://github.com/emmansun/sm3js/actions/workflows/ci.yml)
 [![npm version](https://badge.fury.io/js/gmsm-sm3js.svg)](https://badge.fury.io/js/gmsm-sm3js)
 [![NPM Downloads][npm-downloads-image]][npm-url]
 

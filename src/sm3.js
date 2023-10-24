@@ -7,7 +7,15 @@ const SM3_IV32 = new Uint32Array([
   0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600,
   0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e
 ])
-const SM3_T = [0x79cc4519, 0x7a879d8a]
+const SM3_T = [
+  0x79cc4519, 0xf3988a32, 0xe7311465, 0xce6228cb, 0x9cc45197, 0x3988a32f, 0x7311465e, 0xe6228cbc,
+  0xcc451979, 0x988a32f3, 0x311465e7, 0x6228cbce, 0xc451979c, 0x88a32f39, 0x11465e73, 0x228cbce6,
+  0x9d8a7a87, 0x3b14f50f, 0x7629ea1e, 0xec53d43c, 0xd8a7a879, 0xb14f50f3, 0x629ea1e7, 0xc53d43ce,
+  0x8a7a879d, 0x14f50f3b, 0x29ea1e76, 0x53d43cec, 0xa7a879d8, 0x4f50f3b1, 0x9ea1e762, 0x3d43cec5,
+  0x7a879d8a, 0xf50f3b14, 0xea1e7629, 0xd43cec53, 0xa879d8a7, 0x50f3b14f, 0xa1e7629e, 0x43cec53d,
+  0x879d8a7a, 0xf3b14f5, 0x1e7629ea, 0x3cec53d4, 0x79d8a7a8, 0xf3b14f50, 0xe7629ea1, 0xcec53d43,
+  0x9d8a7a87, 0x3b14f50f, 0x7629ea1e, 0xec53d43c, 0xd8a7a879, 0xb14f50f3, 0x629ea1e7, 0xc53d43ce,
+  0x8a7a879d, 0x14f50f3b, 0x29ea1e76, 0x53d43cec, 0xa7a879d8, 0x4f50f3b1, 0x9ea1e762, 0x3d43cec5]
 
 const ERROR_MSG_INPUT = 'Input must be an string, Buffer or Uint8Array'
 
@@ -21,8 +29,7 @@ function uint32 (n) {
 
 function rotateLeft32 (x, k) {
   const n = 32
-  const s = k & (n - 1)
-  return (x << s) | (x >>> (n - s))
+  return (x << k) | (x >>> (n - k))
 }
 
 function _p0 (x) {
@@ -38,7 +45,7 @@ function _ff (x, y, z) {
 }
 
 function _gg (x, y, z) {
-  return (x & y) | (~x & z)
+  return ((y ^ z) & x) ^ z
 }
 
 // For convenience, let people hash a string, not just a Uint8Array
@@ -48,7 +55,7 @@ function normalizeInput (input) {
     ret = input
   } else if (input instanceof Buffer) {
     ret = new Uint8Array(input)
-  } else if (typeof (input) === 'string') {
+  } else if (typeof input === 'string') {
     ret = new Uint8Array(Buffer.from(input, 'utf8'))
   } else {
     throw new Error(ERROR_MSG_INPUT)
@@ -59,9 +66,11 @@ function normalizeInput (input) {
 // Converts a Uint8Array to a hexadecimal string
 // For example, toHex([255, 0, 255]) returns "ff00ff"
 function toHex (bytes) {
-  return Array.prototype.map.call(bytes, function (n) {
-    return (n < 16 ? '0' : '') + n.toString(16)
-  }).join('')
+  return Array.prototype.map
+    .call(bytes, function (n) {
+      return (n < 16 ? '0' : '') + n.toString(16)
+    })
+    .join('')
 }
 
 function fromHex (hexStr) {
@@ -70,7 +79,7 @@ function fromHex (hexStr) {
   }
   const bytes = []
   for (let i = 0; i < hexStr.length; i += 2) {
-    bytes.push(parseInt(hexStr.substr(i, 2), 16))
+    bytes.push(parseInt(hexStr.substring(i, i + 2), 16))
   }
   return new Uint8Array(bytes)
 }
@@ -94,13 +103,15 @@ function testSpeed (hashFn, N, M) {
     const ms = hashMs - startMs
     startMs = hashMs
     console.log('Hashed in ' + ms + 'ms: ' + hashHex.substring(0, 20) + '...')
-    console.log(Math.round(N / (1 << 20) / (ms / 1000) * 100) / 100 + ' MB PER SECOND')
+    console.log(
+      Math.round((N / (1 << 20) / (ms / 1000)) * 100) / 100 + ' MB PER SECOND'
+    )
   }
 }
 
 function copy (dst, start, src) {
   let i = start
-  for (; i < dst.length && (i - start) < src.length; i++) {
+  for (; i < dst.length && i - start < src.length; i++) {
     dst[i] = src[i - start]
   }
   return i - start
@@ -145,25 +156,26 @@ class Digest {
     const h = new Uint32Array(8)
     const a = new Uint32Array(8)
     const w = new Uint32Array(68)
+    let ss1, ss2, tt1, tt2
     for (let i = 0; i < 8; i++) {
       h[i] = this.h[i]
     }
     while (input.length >= SM3_CHUNK) {
       for (let i = 0; i < 4; i++) {
         const j = 4 * i
-        w[i] = uint32(input[j] << 24 | input[j + 1] << 16 | input[j + 2] << 8 | input[j + 3])
+        w[i] = uint32((input[j] << 24) | (input[j + 1] << 16) | (input[j + 2] << 8) | input[j + 3])
       }
       for (let i = 0; i < 8; i++) {
         a[i] = h[i]
       }
       for (let i = 0; i < 12; i++) {
         const j = 4 * (i + 4)
-        w[i + 4] = uint32(input[j] << 24 | input[j + 1] << 16 | input[j + 2] << 8 | input[j + 3])
-
-        const ss1 = rotateLeft32(rotateLeft32(a[0], 12) + a[4] + rotateLeft32(SM3_T[0], i), 7)
-        const ss2 = ss1 ^ rotateLeft32(a[0], 12)
-        const tt1 = (a[0] ^ a[1] ^ a[2]) + a[3] + ss2 + (w[i] ^ w[i + 4])
-        const tt2 = (a[4] ^ a[5] ^ a[6]) + a[7] + ss1 + w[i]
+        w[i + 4] = uint32((input[j] << 24) | (input[j + 1] << 16) | (input[j + 2] << 8) | input[j + 3])
+        tt2 = rotateLeft32(a[0], 12)
+        ss1 = rotateLeft32(tt2 + a[4] + SM3_T[i], 7)
+        ss2 = ss1 ^ tt2
+        tt1 = (a[0] ^ a[1] ^ a[2]) + a[3] + ss2 + (w[i] ^ w[i + 4])
+        tt2 = (a[4] ^ a[5] ^ a[6]) + a[7] + ss1 + w[i]
 
         a[3] = a[2]
         a[2] = rotateLeft32(a[1], 9)
@@ -176,10 +188,11 @@ class Digest {
       }
       for (let i = 12; i < 16; i++) {
         w[i + 4] = _p1(w[i - 12] ^ w[i - 5] ^ rotateLeft32(w[i + 1], 15)) ^ rotateLeft32(w[i - 9], 7) ^ w[i - 2]
-        const ss1 = rotateLeft32(rotateLeft32(a[0], 12) + a[4] + rotateLeft32(SM3_T[0], i), 7)
-        const ss2 = ss1 ^ rotateLeft32(a[0], 12)
-        const tt1 = (a[0] ^ a[1] ^ a[2]) + a[3] + ss2 + (w[i] ^ w[i + 4])
-        const tt2 = (a[4] ^ a[5] ^ a[6]) + a[7] + ss1 + w[i]
+        tt2 = rotateLeft32(a[0], 12)
+        ss1 = rotateLeft32(tt2 + a[4] + SM3_T[i], 7)
+        ss2 = ss1 ^ tt2
+        tt1 = (a[0] ^ a[1] ^ a[2]) + a[3] + ss2 + (w[i] ^ w[i + 4])
+        tt2 = (a[4] ^ a[5] ^ a[6]) + a[7] + ss1 + w[i]
 
         a[3] = a[2]
         a[2] = rotateLeft32(a[1], 9)
@@ -192,10 +205,11 @@ class Digest {
       }
       for (let i = 16; i < 64; i++) {
         w[i + 4] = _p1(w[i - 12] ^ w[i - 5] ^ rotateLeft32(w[i + 1], 15)) ^ rotateLeft32(w[i - 9], 7) ^ w[i - 2]
-        const ss1 = rotateLeft32(rotateLeft32(a[0], 12) + a[4] + rotateLeft32(SM3_T[1], i), 7)
-        const ss2 = ss1 ^ rotateLeft32(a[0], 12)
-        const tt1 = _ff(a[0], a[1], a[2]) + a[3] + ss2 + (w[i] ^ w[i + 4])
-        const tt2 = _gg(a[4], a[5], a[6]) + a[7] + ss1 + w[i]
+        tt2 = rotateLeft32(a[0], 12)
+        ss1 = rotateLeft32(tt2 + a[4] + SM3_T[i], 7)
+        ss2 = ss1 ^ tt2
+        tt1 = _ff(a[0], a[1], a[2]) + a[3] + ss2 + (w[i] ^ w[i + 4])
+        tt2 = _gg(a[4], a[5], a[6]) + a[7] + ss1 + w[i]
 
         a[3] = a[2]
         a[2] = rotateLeft32(a[1], 9)
@@ -334,11 +348,11 @@ function kdf (data, len) {
 
 module.exports = {
   create: sm3New,
-  kdf: kdf,
+  kdf,
   sum: sm3Sum,
-  fromHex: fromHex,
-  toHex: toHex,
-  normalizeInput: normalizeInput,
+  fromHex,
+  toHex,
+  normalizeInput,
   sumHex: sm3SumHex,
-  testSpeed: testSpeed
+  testSpeed
 }

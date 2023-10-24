@@ -35,6 +35,25 @@ test('SM3 performance', function (t) {
   t.end()
 })
 
+test('SM3 Native performance', function (t) {
+  const N = 1 << 22 // number of bytes to hash
+  const RUNS = 3 // how often to repeat, to allow JIT to finish
+  try {
+    const crypto = require('crypto')
+    if (crypto.getHashes().indexOf('sm3') >= 0) {
+      console.log('Benchmarking sm3.sum(' + (N >> 20) + ' MB input)')
+      function sm3Digest (content) {
+        const h = crypto.createHash('sm3')
+        return h.update(content).digest('hex')
+      }
+      sm3.testSpeed(sm3Digest, N, RUNS)
+    }
+  } catch (err) {
+    console.log('crypto support is disabled!')
+  }
+  t.end()
+})
+
 test('KDF', function (t) {
   const dataHex = '64D20D27D0632957F8028C1E024F6B02EDF23102A566C932AE8BD613A8E865FE58D225ECA784AE300A81A2D48281A828E1CEDF11C4219099840265375077BF78'
   const expected = '006e30dae231b071dfad8aa379e90264491603'
